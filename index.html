@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuis Horor</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #eee;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+.container {
+  background: #1a1a1a;
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  width: 400px;
+  display: none;
+}
+.active { display: block; }
+h1,h2,h3 { text-align: center; }
+.question { margin: 15px 0; }
+button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+button:hover { background: #45a049; }
+#result { text-align:center; font-size:18px; margin-top:20px; }
+#timer { text-align:center; font-size:18px; margin-top:10px; }
+.credit { margin-top: 10px; font-size: 14px; text-align: center; color: #999; }
+/* overlay waktu habis */
+#timeUpOverlay {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff2222;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: none;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+</style>
+</head>
+<body>
+
+<div id="timeUpOverlay">Waktu Habis 😹</div>
+
+<!-- Halaman 1 -->
+<div class="container active" id="page1">
+<h1>Selamat Datang</h1>
+<p style="text-align:center">Kuis horor 1 soal = 1 layar. Coba jangan kelamaan 😹</p>
+<button onclick="goPage(2)">Mulai</button>
+</div>
+
+<!-- Halaman 2: Pilih kategori -->
+<div class="container" id="page2">
+<h2>Pilih kategori pertama</h2>
+<button onclick="startQuiz('mtk')">Matematika</button>
+<button onclick="startQuiz('indo')">Bahasa Indonesia</button>
+</div>
+
+<!-- Halaman soal -->
+<div class="container" id="pageQuiz">
+<h2 id="quizTitle"></h2>
+<div id="quizQuestion"></div>
+<div id="timer"></div>
+<button id="nextBtn">Lanjut</button>
+</div>
+
+<!-- Halaman hasil -->
+<div class="container" id="pageResult">
+<h2>Hasil Kuis</h2>
+<div id="result"></div>
+<div class="credit" id="credit"></div>
+</div>
+
+<script>
+let score = 0;
+let currentQuiz = [];
+let currentIndex = 0;
+let countdown;
+const timePerQuestion = 15; // detik
+
+const quizzes = {
+  mtk: [
+    {q:"5 + 7 = ?", a:["10","12","13"], correct:1},
+    {q:"9 × 3 = ?", a:["27","21","18"], correct:0}
+  ],
+  indo: [
+    {q:'Sinonim dari "Indah" adalah?', a:["Cantik","Buruk","Jelek"], correct:0},
+    {q:'Antonim dari "Besar" adalah?', a:["Kecil","Tinggi","Panjang"], correct:0}
+  ]
+};
+
+function goPage(n){
+  document.querySelectorAll('.container').forEach(div => div.classList.remove('active'));
+  document.getElementById("page"+n).classList.add('active');
+}
+
+function startQuiz(subject){
+  currentQuiz = subject==='mtk'? [...quizzes.mtk, ...quizzes.indo] : [...quizzes.indo, ...quizzes.mtk];
+  currentIndex = 0; score = 0;
+  goPage('Quiz'); showQuestion();
+}
+
+function showQuestion(){
+  if(currentIndex >= currentQuiz.length){ showResult(); return; }
+  const q = currentQuiz[currentIndex];
+  document.getElementById("quizTitle").innerText = "Soal "+(currentIndex+1);
+  let html = '<div class="question"><p>'+q.q+'</p>';
+  q.a.forEach((opt,i)=>{ html+='<label><input type="radio" name="answer" value="'+i+'"> '+opt+'</label><br>'; });
+  html+='</div>';
+  document.getElementById("quizQuestion").innerHTML = html;
+  startTimer(timePerQuestion);
+}
+
+function startTimer(seconds){
+  clearInterval(countdown);
+  let time = seconds;
+  const timerEl = document.getElementById("timer");
+  const overlay = document.getElementById("timeUpOverlay");
+  timerEl.style.color = "#00ff00";
+
+  countdown = setInterval(()=>{
+    time--;
+    if(time<=5) timerEl.style.color = "#ff2222";
+    timerEl.innerText = "Waktu: "+time+" detik";
+    if(time<=0){
+      clearInterval(countdown);
+      overlay.style.display = "block"; overlay.style.opacity = "1";
+      setTimeout(()=>{ overlay.style.opacity="0"; setTimeout(()=>overlay.style.display="none",300); },1000);
+      currentIndex++; showQuestion();
+    }
+  },1000);
+}
+
+document.getElementById("nextBtn").addEventListener("click", ()=>{
+  const selected = document.querySelector('input[name="answer"]:checked');
+  if(selected){
+    if(parseInt(selected.value)===currentQuiz[currentIndex].correct) score++;
+  }
+  clearInterval(countdown);
+  currentIndex++;
+  showQuestion();
+});
+
+function showResult(){
+  goPage('Result');
+  const total = currentQuiz.length;
+  const gpa = ((score/total)*4).toFixed(2);
+  document.getElementById("result").innerHTML = `Skor kamu: ${score} dari ${total}<br>Rata-rata GPA: ${gpa}`;
+  const text = "Dibuat oleh Andika 😹🔥"; let i=0;
+  function typeWriter(){ if(i<text.length){ document.getElementById("credit").innerHTML+=text.charAt(i); i++; setTimeout(typeWriter,10); } }
+  typeWriter();
+}
+</script>
+</body>
+</html>
